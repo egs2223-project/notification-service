@@ -1,5 +1,6 @@
 const express = require("express");
 const app = express();
+app.use(express.json());
 const port = 3030;
 
 const dotenv = require("dotenv").config();
@@ -12,11 +13,14 @@ const phoneNumber = process.env.TWILIO_PHONE_NUMBER;
 const client = require("twilio")(accountSid, authToken);
 
 app.post("/v1/notifications/sms", (req, res) => {
+  const sendTo = req.body["phone_number"];
+  const body = req.body["msg_body"];
+
   client.messages
     .create({
-      body: "Hi there, EGS Project",
+      body: body,
       from: phoneNumber,
-      to: "+351xxxxxx",
+      to: sendTo,
     })
     .then((message) => {
       console.log(message.sid);
@@ -24,24 +28,46 @@ app.post("/v1/notifications/sms", (req, res) => {
       return;
     })
     .catch((err) => {
-      res.json(error).end();
+      console.log(err);
+      res.json(err).end();
       return;
     });
 });
 
 //send e-mail message
 const sgMail = require("@sendgrid/mail");
+sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+
 app.post("/v1/notifications/email", (req, res) => {
-  sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+
+  const to = req.body["send_to"];
+  const subject = req.body["subject"];
+  const text = req.body["text"];
+  const html = req.body["html"];
+  const attachments = req.body["attachments"];
+
+  for (var i = 0; i < attachments.length; i++) {
+    attachments[i]["disposition"] = "attachment";
+  }
+
   const msg = {
-    to: "xxxx@outlook.com",
+    to: to,
     from: "xxxx@outlook.com",
-    subject: "EGS Project | Notification Service",
-    text: "We notify you about your appointment",
-    html: "<strong>Prapare your documents and get ready for it.</strong>",
+    subject: subject,
+    text: text,
+    html: html,
+    attachments: attachments
   };
-  sgMail.send(msg);
-  console.log(`Email sent to ${msg.to}`);
+  
+  sgMail.send(msg)
+  .then(() => {
+    console.log(`Email sent to ${msg.to}`);
+  })
+  .catch((err) => {
+    console.log(err);
+    res.json(err).end();
+    return;
+  });
 });
 
 app.listen(port, () => {
