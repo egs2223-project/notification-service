@@ -1,6 +1,6 @@
 const express = require("express");
 const app = express();
-const port = 3010;
+const port = 3030;
 
 const dotenv = require("dotenv").config();
 if (dotenv.error) {
@@ -11,7 +11,7 @@ const authToken = process.env.TWILIO_AUTH_TOKEN;
 const phoneNumber = process.env.TWILIO_PHONE_NUMBER;
 const client = require("twilio")(accountSid, authToken);
 
-app.get("/v1/notifications/sms", (req, res) => {
+app.post("/v1/notifications/sms", (req, res) => {
   client.messages
     .create({
       body: "Hi there, EGS Project",
@@ -31,7 +31,7 @@ app.get("/v1/notifications/sms", (req, res) => {
 
 //send e-mail message
 const sgMail = require("@sendgrid/mail");
-app.get("/v1/notifications/email", (req, res) => {
+app.post("/v1/notifications/email", (req, res) => {
   sgMail.setApiKey(process.env.SENDGRID_API_KEY);
   const msg = {
     to: "xxxx@outlook.com",
