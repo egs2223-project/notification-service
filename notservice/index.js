@@ -13,7 +13,7 @@ const phoneNumber = process.env.TWILIO_PHONE_NUMBER;
 const client = require("twilio")(accountSid, authToken);
 
 app.post("/v1/notifications/sms", (req, res) => {
-  const sendTo = req.body["phone_number"];
+  const sendTo = req.body["send_to"];
   const body = req.body["msg_body"];
 
   client.messages
@@ -46,8 +46,11 @@ app.post("/v1/notifications/email", (req, res) => {
   const html = req.body["html"];
   const attachments = req.body["attachments"];
 
-  for (var i = 0; i < attachments.length; i++) {
-    attachments[i]["disposition"] = "attachment";
+  if(attachments != null)
+  {
+    for (var i = 0; i < attachments.length; i++) {
+      attachments[i]["disposition"] = "attachment";
+    }
   }
 
   const msg = {
@@ -55,10 +58,19 @@ app.post("/v1/notifications/email", (req, res) => {
     from: "xxxx@outlook.com",
     subject: subject,
     text: text,
-    html: html,
-    attachments: attachments
   };
   
+  if(html != null)
+  {
+    msg["html"] = html;
+  }
+
+  if(attachments != null)
+  {
+    msg["attachments"] = attachments;
+  }
+  
+  console.log(msg);
   sgMail.send(msg)
   .then(() => {
     console.log(`Email sent to ${msg.to}`);
