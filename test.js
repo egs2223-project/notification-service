@@ -4,7 +4,7 @@
 //         'Accept': 'application/json',
 //         'Content-Type': 'application/json'
 //     },
-//     body: JSON.stringify({ "phone_number": "+351xxxxxxxxx", "msg_body": "Hello" })
+//     body: JSON.stringify({ "send_to": "+351xxxxxxxxx", "msg_body": "Hello" })
 // })
 // .then(response => response.json())
 // .then(response => console.log(JSON.stringify(response)))
