@@ -72,7 +72,9 @@ app.post("/v1/notifications/email", (req, res) => {
   
   console.log(msg);
   sgMail.send(msg)
-  .then(() => {
+  .then((result) => {
+    res.json({ result }).end();
+    console.log(result);
     console.log(`Email sent to ${msg.to}`);
   })
   .catch((err) => {
