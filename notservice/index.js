@@ -1,6 +1,8 @@
 const express = require("express");
+const bodyParser = require("body-parser");
 const app = express();
 app.use(express.json());
+app.use(bodyParser.json());
 const port = 3030;
 
 const dotenv = require("dotenv").config();
@@ -12,6 +14,7 @@ const authToken = process.env.TWILIO_AUTH_TOKEN;
 const phoneNumber = process.env.TWILIO_PHONE_NUMBER;
 const client = require("twilio")(accountSid, authToken);
 
+// send SMS message with Twilio
 app.post("/v1/notifications/sms", (req, res) => {
   const sendTo = req.body["send_to"];
   const body = req.body["msg_body"];
@@ -34,53 +37,22 @@ app.post("/v1/notifications/sms", (req, res) => {
     });
 });
 
-//send e-mail message
-const sgMail = require("@sendgrid/mail");
-sgMail.setApiKey(process.env.SENDGRID_API_KEY);
-
+//send e-mail message with mailgun
+const mailGun = require("mailgun-js")({
+  apiKey: process.env.MAIL_GUN_API_KEY,
+  domain: process.env.MAIL_GUN_DOMAIN,
+});
 app.post("/v1/notifications/email", (req, res) => {
+  const { to, subject, text } = req.body;
 
-  const to = req.body["send_to"];
-  const subject = req.body["subject"];
-  const text = req.body["text"];
-  const html = req.body["html"];
-  const attachments = req.body["attachments"];
-
-  if(attachments != null)
-  {
-    for (var i = 0; i < attachments.length; i++) {
-      attachments[i]["disposition"] = "attachment";
-    }
-  }
-
-  const msg = {
-    to: to,
-    from: "xxxx@outlook.com",
-    subject: subject,
-    text: text,
+  const data = {
+    from: process.env.FROM_EMAIL_GUN,
+    to,
+    subject,
+    text,
   };
-  
-  if(html != null)
-  {
-    msg["html"] = html;
-  }
-
-  if(attachments != null)
-  {
-    msg["attachments"] = attachments;
-  }
-  
-  console.log(msg);
-  sgMail.send(msg)
-  .then((result) => {
-    res.json({ result }).end();
-    console.log(result);
-    console.log(`Email sent to ${msg.to}`);
-  })
-  .catch((err) => {
-    console.log(err);
-    res.json(err).end();
-    return;
+  mailGun.messages().send(data, (error, body) => {
+    console.log(`Email sent to ${data.to}`);
   });
 });
 
