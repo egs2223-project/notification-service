@@ -11,8 +11,8 @@
 
 ```
 {
-    "msg_body":"EGS SMS NOTIFY",
-    "send_to":"+351xxxxxxxx"
+    "message":"EGS SMS NOTIFY",
+    "sendTo":"+351xxxxxxxx"
 }
 ```
 
@@ -20,9 +20,13 @@ http://localhost:3030/v1/notifications/email
 
 ```
 {
-    "to":"put here your registered email",
-    "subject":"EGS Project | Notification Service",
-    "text": "We notify you about your appointment Booking"
+    "sender": "egs-notify@nextechnology.xyz",
+    "recipient": "recipient@example.com",
+    "subject": "EGS Project | Notification Service",
+    "body": "<h2>Wecolcome to our Apointment Booking Service</h2>",
+    "attachment_name": "my_attachment.txt",
+    "attachment_data": "Greetings"
 }
+
 
 ```
