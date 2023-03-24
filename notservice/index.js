@@ -20,8 +20,16 @@ app.post("/v1/notifications/sms", (req, res) => {
       secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
     },
   });
-  const message = req.body["message"];
-  const phoneNumber = req.body["sendTo"];
+
+  let errors = {};
+  if(!checkBodyJsonParams(req.body, errors, ["msg_body", "send_to"]))
+  {
+    res.status(400).send(errors);
+    return;
+  }
+
+  const message = req.body["msg_body"];
+  const phoneNumber = req.body["send_to"];
 
   const params = {
     Message: message,
@@ -33,19 +41,38 @@ app.post("/v1/notifications/sms", (req, res) => {
     .then((data) => {
       console.log("Message Id:", data.MessageId);
       console.log(`Message sent to ${params.PhoneNumber}`);
+      res.status(200).send("Ok");
     })
     .catch((error) => {
       console.error(error);
+      res.status(400).send(error.Error);
     });
 });
 
-//send e-mail message with AWS SES
+// checks fields and creates an informative error message
+function checkBodyJsonParams(body, result, params) {
+  let failed = false;
+  result["Errors"] = [];
+  for (p of params) 
+  {
+    if(!body[p]) 
+    {
+      failed = true;
+      result["Errors"].push(`Missing field ${p}`);
+    }
+  }
+  
+  if(failed)
+  {
+    return false;
+  }
+  return true;
+}
 
+// send e-mail message with AWS SES
+// https://github.com/strapi/strapi/issues/9270
 app.post("/v1/notifications/email", (req, res) => {
-  const { SESClient, SendEmailCommand } = require("@aws-sdk/client-ses");
-
-  const { Readable } = require("stream");
-  const { createReadStream } = require("fs");
+  const { SESClient, SendRawEmailCommand } = require("@aws-sdk/client-ses");
 
   const sesClient = new SESClient({
     region: process.env.AWS_REGION,
@@ -55,54 +82,85 @@ app.post("/v1/notifications/email", (req, res) => {
     },
   });
 
+  let errors = {};
+  if(!checkBodyJsonParams(req.body, errors, ["sender", "recipients", "subject", "body"]))
+  {
+    res.status(400).send(errors);
+    return;
+  }
+
   const senderEMail = req.body["sender"]; //"egs-notify@nextechnology.xyz"(This is a default email)
-  const recipientEmail = req.body["recipient"]; // your_verified_recipient_email(you can put several recipients)
+  const recipientEmails = req.body["recipients"]; // your_verified_recipient_email(you can put several recipients)
   const emailSubject = req.body["subject"]; // example: "EGS Project | Notification Service"
   const emailBody = req.body["body"]; // example: <h2>Wecolcome to our Apointment Booking Service</h2>
-  const attachmentName = req.body["attachment_name"]; // example: "file.txt"
-  const attachmentData = req.body["attachment_data"]; // example: "something"
+  const attachments = req.body["attachments"]; // example: [{ "attachment_name": "pain.png", "attachment_data": base64encodeddata, "attachment_mime": "image/png" }]
 
-  // Create an Attachment object with the content and filename
-  const attachmentStream = new Readable();
-  attachmentStream.push(Buffer.from(attachmentData, "base64"));
-  attachmentStream.push(null);
 
-  const params = {
-    Destination: {
-      ToAddresses: [recipientEmail],
-    },
-    Message: {
-      Body: {
-        Html: {
-          Charset: "UTF-8",
-          Data: emailBody,
-        },
-      },
-      Subject: {
-        Charset: "UTF-8",
-        Data: emailSubject,
-      },
-    },
-    Source: senderEMail,
-  };
+  var mimemessage = require("mimemessage");
+  let mailContent = mimemessage.factory({
+    contentType: "multipart/mixed",
+    body: [],
+  });
 
-  // Add the attachment to the email if it's present
-  if (attachmentData) {
-    const attachment = {
-      filename: attachmentName,
-      content: attachmentStream,
-    };
-    params.Message.Body.Attachments = [attachment];
+  mailContent.header("From", senderEMail);
+  mailContent.header("To", recipientEmails);
+
+  mailContent.header("Subject", emailSubject);
+
+  var alternateEntity = mimemessage.factory({
+    contentType: "multipart/alternate;charset=utf-8",
+    body: [],
+  });
+
+  var plainEntity = mimemessage.factory({
+    contentType: "text/html;charset=utf-8",
+    body: emailBody,
+  });
+
+  alternateEntity.body.push(plainEntity);
+  mailContent.body.push(alternateEntity);
+
+  if(Array.isArray(attachments))
+  {
+    for (a of attachments) 
+    {
+      if(!checkBodyJsonParams(a, errors, ["attachment_data", "attachment_mime", "attachment_name"]))
+      {
+        res.status(400).send(errors);
+        return;
+      }
+      
+      let bufferObj = Buffer.from(a["attachment_data"], "base64");
+      var attachmentEntity = mimemessage.factory({
+        contentType:  a["attachment_mime"],
+        contentTransferEncoding: "base64",
+        body: bufferObj.toString("base64"),
+      });
+    
+      attachmentEntity.header(
+        "Content-Disposition",
+        `attachment ;filename=${a["attachment_name"]}`
+      );
+    
+      mailContent.body.push(attachmentEntity);
+    }
   }
-  const command = new SendEmailCommand(params);
+
+  const command = new SendRawEmailCommand({
+    Destinations: recipientEmails,
+    Source: senderEMail,
+    RawMessage: { Data: Buffer.from(mailContent.toString()) }
+  })
   sesClient
     .send(command)
     .then((data) => {
       console.log("Email Id:", data.MessageId);
-      console.log(`Email sent to ${params.Destination.ToAddresses}`);
+      console.log(`Email sent to ${recipientEmails}`);
+      res.status(200).send("Ok");
     })
     .catch((error) => {
       console.error(error);
+      res.status(400).send(error.Error);
     });
 });
 

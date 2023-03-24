@@ -11,21 +11,24 @@
 
 ```
 {
-    "message":"EGS SMS NOTIFY",
-    "sendTo":"+351xxxxxxxx"
+    "msg_body":"EGS SMS NOTIFY",
+    "send_to":"+351xxxxxxxx"
 }
 ```
 
 http://localhost:3030/v1/notifications/email
 
 ```
-{
-    "sender": "egs-notify@nextechnology.xyz",
-    "recipient": "recipient@example.com",
-    "subject": "EGS Project | Notification Service",
-    "body": "<h2>Wecolcome to our Apointment Booking Service</h2>",
-    "attachment_name": "my_attachment.txt",
-    "attachment_data": "Greetings"
+{   "sender": "egs-notify@nextechnology.xyz", 
+    "recipients": ["recipient@example.com"], 
+    "subject": "EGS Project | Notification Service", 
+    "body": `<img alt = "Embedded Image" src="cid:pain.png"/>`, 
+    "attachments": [
+    {
+      "attachment_name": "pain.ics",
+      "attachment_data": calendar,
+      "attachment_mime": "text/calendar"
+    }]
 }
 
 
