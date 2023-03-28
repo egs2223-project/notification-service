@@ -1,5 +1,6 @@
 const express = require("express");
 const bodyParser = require("body-parser");
+
 const app = express();
 app.use(express.json());
 app.use(bodyParser.json());
@@ -22,8 +23,7 @@ app.post("/v1/notifications/sms", (req, res) => {
   });
 
   let errors = {};
-  if(!checkBodyJsonParams(req.body, errors, ["msg_body", "send_to"]))
-  {
+  if (!checkBodyJsonParams(req.body, errors, ["msg_body", "send_to"])) {
     res.status(400).send(errors);
     return;
   }
@@ -53,17 +53,14 @@ app.post("/v1/notifications/sms", (req, res) => {
 function checkBodyJsonParams(body, result, params) {
   let failed = false;
   result["Errors"] = [];
-  for (p of params) 
-  {
-    if(!body[p]) 
-    {
+  for (p of params) {
+    if (!body[p]) {
       failed = true;
       result["Errors"].push(`Missing field ${p}`);
     }
   }
-  
-  if(failed)
-  {
+
+  if (failed) {
     return false;
   }
   return true;
@@ -83,8 +80,14 @@ app.post("/v1/notifications/email", (req, res) => {
   });
 
   let errors = {};
-  if(!checkBodyJsonParams(req.body, errors, ["sender", "recipients", "subject", "body"]))
-  {
+  if (
+    !checkBodyJsonParams(req.body, errors, [
+      "sender",
+      "recipients",
+      "subject",
+      "body",
+    ])
+  ) {
     res.status(400).send(errors);
     return;
   }
@@ -94,7 +97,6 @@ app.post("/v1/notifications/email", (req, res) => {
   const emailSubject = req.body["subject"]; // example: "EGS Project | Notification Service"
   const emailBody = req.body["body"]; // example: <h2>Wecolcome to our Apointment Booking Service</h2>
   const attachments = req.body["attachments"]; // example: [{ "attachment_name": "pain.png", "attachment_data": base64encodeddata, "attachment_mime": "image/png" }]
-
 
   var mimemessage = require("mimemessage");
   let mailContent = mimemessage.factory({
@@ -120,28 +122,31 @@ app.post("/v1/notifications/email", (req, res) => {
   alternateEntity.body.push(plainEntity);
   mailContent.body.push(alternateEntity);
 
-  if(Array.isArray(attachments))
-  {
-    for (a of attachments) 
-    {
-      if(!checkBodyJsonParams(a, errors, ["attachment_data", "attachment_mime", "attachment_name"]))
-      {
+  if (Array.isArray(attachments)) {
+    for (a of attachments) {
+      if (
+        !checkBodyJsonParams(a, errors, [
+          "attachment_data",
+          "attachment_mime",
+          "attachment_name",
+        ])
+      ) {
         res.status(400).send(errors);
         return;
       }
-      
+
       let bufferObj = Buffer.from(a["attachment_data"], "base64");
       var attachmentEntity = mimemessage.factory({
-        contentType:  a["attachment_mime"],
+        contentType: a["attachment_mime"],
         contentTransferEncoding: "base64",
         body: bufferObj.toString("base64"),
       });
-    
+
       attachmentEntity.header(
         "Content-Disposition",
         `attachment ;filename=${a["attachment_name"]}`
       );
-    
+
       mailContent.body.push(attachmentEntity);
     }
   }
@@ -149,8 +154,8 @@ app.post("/v1/notifications/email", (req, res) => {
   const command = new SendRawEmailCommand({
     Destinations: recipientEmails,
     Source: senderEMail,
-    RawMessage: { Data: Buffer.from(mailContent.toString()) }
-  })
+    RawMessage: { Data: Buffer.from(mailContent.toString()) },
+  });
   sesClient
     .send(command)
     .then((data) => {

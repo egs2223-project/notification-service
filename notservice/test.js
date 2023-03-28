@@ -9,6 +9,7 @@
 // .then(response => response.json())
 // .then(response => console.log(JSON.stringify(response)))
 
+const fetch = require("node-fetch");
 fetch("http://localhost:3030/v1/notifications/email", {
   method: "POST",
   headers: {
