@@ -1,0 +1,39 @@
+#To build: docker build -t egs-notification-svc -f Dockerfile.notify .
+#To add to registry: sudo docker push jmuachifi/egs-notification-svc:latest
+
+FROM node:latest
+
+
+# Set DNS server for container
+ENV DNS_SERVERS=8.8.8.8
+
+# Set Labels
+LABEL maintainer="Jodionisio Muachifi"
+LABEL ua="Universidade de Aveiro"
+LABEL curso="MECT"
+LABEL project="EGS-Agendamento de consultas Online"
+LABEL service="SMS,EMAIL Notification"
+
+
+
+# Create app directory
+RUN mkdir /notservice
+WORKDIR /notservice
+
+
+RUN apt-get update && apt-get install -y netcat-openbsd
+
+# A wildcard is used to ensure both package.json AND package-lock.json are copied
+# where available (npm@5+)
+COPY ./notservice/package.json ./notservice/package-lock.json ./
+COPY ./notservice/index.js ./notservice/.env ./notservice/
+
+RUN npm install 
+
+COPY ./notservice .
+
+# If you are building your code for production
+# RUN npm ci --only=production
+
+EXPOSE 4000
+ENTRYPOINT ["node", "index.js"]
