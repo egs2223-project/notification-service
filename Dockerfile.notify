@@ -1,7 +1,7 @@
 #To build: docker build -t egs-notification-svc -f Dockerfile.notify .
 #To add to registry: sudo docker push jmuachifi/egs-notification-svc:latest
 
-FROM node:latest
+FROM node:alpine
 
 
 # Set DNS server for container
@@ -20,7 +20,7 @@ LABEL service="SMS,EMAIL Notification"
 RUN mkdir /notservice
 WORKDIR /notification-service/notservice
 
-RUN apt-get update && apt-get install -y netcat-openbsd
+RUN apk update && apk upgrade && apk add --no-cache netcat-openbsd
 
 # A wildcard is used to ensure both package.json AND package-lock.json are copied
 # where available (npm@5+)
