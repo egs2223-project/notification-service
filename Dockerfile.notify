@@ -18,22 +18,20 @@ LABEL service="SMS,EMAIL Notification"
 
 # Create app directory
 RUN mkdir /notservice
-WORKDIR /notservice
-
+WORKDIR /notification-service/notservice
 
 RUN apt-get update && apt-get install -y netcat-openbsd
 
 # A wildcard is used to ensure both package.json AND package-lock.json are copied
 # where available (npm@5+)
-COPY ./notservice/package.json ./notservice/package-lock.json ./
-COPY ./notservice/index.js ./notservice/.env ./notservice/
+COPY ./notification-service/notservice/package.json ./notification-service/notservice/package-lock.json ./
+COPY ./notification-service/notservice/index.js ./notification-service/notservice/.env ./notservice/
 
 RUN npm install 
 
-COPY ./notservice .
+COPY ./notification-service/notservice .
 
 # If you are building your code for production
 # RUN npm ci --only=production
 
-EXPOSE 4000
 ENTRYPOINT ["node", "index.js"]
