@@ -4,8 +4,7 @@ const bodyParser = require("body-parser");
 const app = express();
 app.use(express.json());
 app.use(bodyParser.json());
-const port = process.env.BIND_PORT;
-const address = process.env.BIND_ADDR;
+const port = 4000;
 
 const dotenv = require("dotenv").config();
 if (dotenv.error) {
@@ -170,6 +169,6 @@ app.post("/v1/notifications/email", (req, res) => {
     });
 });
 
-app.listen(port, address, () => {
-  console.log(`Notification service listening at http://${address}:${port}`);
+app.listen(port, () => {
+  console.log(`Notification service listening at http://localhost:${port}`);
 });
