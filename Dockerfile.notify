@@ -1,5 +1,5 @@
-# To build: docker buildx build --platform linux/amd64 --network=host -t registry.deti:5000/egs-doctalk/egs-notification-svc:v1 -f Dockerfile.notify .
-# To add to registry: docker push registry.deti:5000/egs-doctalk/egs-notification-svc:v1
+#To build: docker build -t egs-notification-svc -f Dockerfile.notify .
+#To add to registry: sudo docker push jmuachifi/egs-notification-svc:latest
 
 FROM node:alpine
 
@@ -18,18 +18,18 @@ LABEL service="SMS,EMAIL Notification"
 
 # Create app directory
 RUN mkdir /notservice
-WORKDIR /notservice
+WORKDIR /notification-service/notservice
 
 RUN apk update && apk upgrade && apk add --no-cache netcat-openbsd
 
 # A wildcard is used to ensure both package.json AND package-lock.json are copied
 # where available (npm@5+)
-COPY ./notservice/package.json ./notservice/package-lock.json ./
-COPY ./notservice/index.js ./notservice/.env ./notservice/
+COPY ./notification-service/notservice/package.json ./notification-service/notservice/package-lock.json ./
+COPY ./notification-service/notservice/index.js ./notification-service/notservice/.env ./notservice/
 
 RUN npm install 
 
-COPY ./notservice .
+COPY ./notification-service/notservice .
 
 # If you are building your code for production
 # RUN npm ci --only=production
