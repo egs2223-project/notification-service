@@ -20,6 +20,7 @@
     "mailgun-js": "^0.22.0",
     "mimemessage": "^1.0.5",
     "node-fetch": "^3.3.1",
+    "prom-client": "^14.2.0",
     "send-sms": "file:",
     "twilio": "^4.8.0"
   }
